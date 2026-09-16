@@ -6,3 +6,9 @@ target/
 *.iml
 .vscode/
 .DS_Store
+
+target/
+.idea/
+*.iml
+application-local.properties
+.env
