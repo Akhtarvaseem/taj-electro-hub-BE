@@ -5,6 +5,7 @@ import com.tajelectric.electrohub.repository.CartItemRepository;
 import com.tajelectric.electrohub.repository.OrderRepository;
 import com.tajelectric.electrohub.repository.ProductRepository;
 import com.tajelectric.electrohub.security.AuthUtil;
+import com.tajelectric.electrohub.util.PinUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +49,19 @@ public class OrderController {
         List<CartItem> cart = cartRepo.findByUserId(userId);
         if (cart.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Cart is empty"));
+        }
+
+        // ===== Pincode delivery check (same rule as /api/delivery/check) =====
+        @SuppressWarnings("unchecked")
+        Map<String, Object> addrPeek = (Map<String, Object>) body.get("addressData");
+        String pin = addrPeek == null ? "" : String.valueOf(addrPeek.getOrDefault("pincode", "")).trim();
+        if (!pin.matches("[1-9][0-9]{5}")) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Please provide a valid 6-digit delivery pincode."));
+        }
+        if (pin.equals("000000") || pin.equals("111111") || pin.equals("999999")) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Sorry, we do not deliver to pincode " + pin + " yet."));
         }
 
         // ===== Stock validation: reject if any item exceeds available stock =====

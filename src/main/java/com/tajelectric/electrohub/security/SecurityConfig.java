@@ -55,9 +55,10 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/api/auth/**", "/api/seed").permitAll()
+                .requestMatchers("/api/auth/**", "/api/seed", "/api/seed/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
                 .requestMatchers("/api/health").permitAll()
+                .requestMatchers("/api/delivery/**").permitAll()
                 // Admin-only
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/products", "/api/products/**").hasRole("ADMIN")

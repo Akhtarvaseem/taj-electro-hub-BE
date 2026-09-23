@@ -38,8 +38,14 @@ public class AuthController {
     public record LoginRequest(@Email String email, @NotBlank String password) {}
 
     private Map<String, Object> userDto(User u) {
-        return Map.of("id", u.getId(), "name", u.getName(),
-                "email", u.getEmail(), "role", u.getRole());
+        java.util.HashMap<String, Object> m = new java.util.HashMap<>();
+        m.put("id", u.getId());
+        m.put("name", u.getName());
+        m.put("email", u.getEmail());
+        m.put("role", u.getRole());
+        m.put("phone", u.getPhone());
+        m.put("avatar", u.getAvatar());
+        return m;
     }
 
     @PostMapping("/register")
@@ -80,5 +86,28 @@ public class AuthController {
         User u = userRepo.findById(userId).orElse(null);
         body.put("user", u == null ? null : userDto(u));
         return ResponseEntity.ok(body);
+    }
+
+    /** Update name, phone and/or profile picture (avatar URL or data-URI). */
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> body) {
+        Long userId = AuthUtil.currentUserId();
+        if (userId == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        User u = userRepo.findById(userId).orElse(null);
+        if (u == null) return ResponseEntity.status(404).body(Map.of("error", "Not found"));
+
+        if (body.get("name") != null && !body.get("name").toString().isBlank())
+            u.setName(body.get("name").toString().trim());
+        if (body.containsKey("phone"))
+            u.setPhone(body.get("phone") == null ? null : body.get("phone").toString());
+        if (body.containsKey("avatar")) {
+            String av = body.get("avatar") == null ? null : body.get("avatar").toString();
+            if (av != null && av.length() > 800_000) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Image is too large. Please use a smaller photo."));
+            }
+            u.setAvatar(av);
+        }
+        userRepo.save(u);
+        return ResponseEntity.ok(Map.of("user", userDto(u)));
     }
 }

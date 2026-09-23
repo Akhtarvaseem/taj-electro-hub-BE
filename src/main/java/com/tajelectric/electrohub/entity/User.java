@@ -24,6 +24,9 @@ public class User {
     @Column(nullable = false)
     private String role = "USER"; // USER | ADMIN
 
+    @Column(columnDefinition = "text")
+    private String avatar;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -39,6 +42,8 @@ public class User {
     public void setPhone(String phone) { this.phone = phone; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

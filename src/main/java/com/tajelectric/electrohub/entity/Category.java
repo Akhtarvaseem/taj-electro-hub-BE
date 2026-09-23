@@ -15,6 +15,7 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column(length = 1000)
     private String icon;
 
     public Long getId() { return id; }
