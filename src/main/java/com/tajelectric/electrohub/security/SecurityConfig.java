@@ -56,9 +56,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
                 .requestMatchers("/api/auth/**", "/api/seed", "/api/seed/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
+                        "/api/brands", "/api/banners", "/api/coupons/validate").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/api/delivery/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/complaints").permitAll()
                 // Admin-only
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/products", "/api/products/**").hasRole("ADMIN")

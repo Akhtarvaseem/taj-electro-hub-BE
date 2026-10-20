@@ -2,6 +2,7 @@ package com.tajelectric.electrohub.controller;
 
 import com.tajelectric.electrohub.entity.*;
 import com.tajelectric.electrohub.repository.CartItemRepository;
+import com.tajelectric.electrohub.repository.CouponRepository;
 import com.tajelectric.electrohub.repository.OrderRepository;
 import com.tajelectric.electrohub.repository.ProductRepository;
 import com.tajelectric.electrohub.security.AuthUtil;
@@ -20,12 +21,14 @@ public class OrderController {
     private final OrderRepository orderRepo;
     private final CartItemRepository cartRepo;
     private final ProductRepository productRepo;
+    private final CouponRepository couponRepo;
 
     public OrderController(OrderRepository orderRepo, CartItemRepository cartRepo,
-                           ProductRepository productRepo) {
+                           ProductRepository productRepo, CouponRepository couponRepo) {
         this.orderRepo = orderRepo;
         this.cartRepo = cartRepo;
         this.productRepo = productRepo;
+        this.couponRepo = couponRepo;
     }
 
     @GetMapping
@@ -88,7 +91,26 @@ public class OrderController {
             if (p != null) itemsTotal += p.getPrice() * ci.getQuantity();
         }
         double deliveryFee = itemsTotal >= 500 ? 0 : 40;
-        double total = itemsTotal + deliveryFee;
+        double discount = 0;
+        String appliedCode = null;
+        Object couponRaw = body.get("couponCode");
+        if (couponRaw != null && !couponRaw.toString().isBlank()) {
+            var cpn = couponRepo.findByCodeIgnoreCase(couponRaw.toString().trim());
+            if (cpn.isEmpty() || !Boolean.TRUE.equals(cpn.get().getActive())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid or inactive coupon."));
+            }
+            Coupon c = cpn.get();
+            if (c.getExpiry() != null && c.getExpiry().isBefore(java.time.Instant.now())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "This coupon has expired."));
+            }
+            if (c.getMinOrder() != null && itemsTotal < c.getMinOrder()) {
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "Coupon requires a minimum order of ₹" + Math.round(c.getMinOrder())));
+            }
+            discount = Math.round(itemsTotal * (c.getPercent() / 100.0));
+            appliedCode = c.getCode();
+        }
+        double total = Math.max(0, itemsTotal - discount) + deliveryFee;
 
         @SuppressWarnings("unchecked")
         Map<String, Object> addr = (Map<String, Object>) body.get("addressData");
@@ -100,6 +122,8 @@ public class OrderController {
         order.setPaymentStatus("Pending");
         order.setItemsTotal(itemsTotal);
         order.setDeliveryFee(deliveryFee);
+        order.setDiscountAmount(discount);
+        order.setCouponCode(appliedCode);
         order.setTotal(total);
         if (addr != null) {
             order.setShipFullName(String.valueOf(addr.get("fullName")));
