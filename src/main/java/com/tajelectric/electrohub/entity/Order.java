@@ -33,6 +33,11 @@ public class Order {
     @Column(nullable = false)
     private Double total;
 
+    @Column(name = "coupon_code")
+    private String couponCode;
+    @Column(name = "discount_amount")
+    private Double discountAmount = 0.0;
+
     // Shipping address stored flat
     @Column(name = "ship_full_name")
     private String shipFullName;
@@ -63,6 +68,10 @@ public class Order {
     public void setDeliveryFee(Double deliveryFee) { this.deliveryFee = deliveryFee; }
     public Double getTotal() { return total; }
     public void setTotal(Double total) { this.total = total; }
+    public String getCouponCode() { return couponCode; }
+    public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+    public Double getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(Double discountAmount) { this.discountAmount = discountAmount; }
     public String getShipFullName() { return shipFullName; }
     public void setShipFullName(String shipFullName) { this.shipFullName = shipFullName; }
     public String getShipPhone() { return shipPhone; }

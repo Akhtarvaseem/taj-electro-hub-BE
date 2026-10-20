@@ -33,6 +33,7 @@ public class ProductController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) String featured,
+            @RequestParam(required = false) String brand,
             @RequestParam(defaultValue = "popular") String sort) {
 
         // Resolve category slug -> id (null if no filter, -1 if slug not found)
@@ -47,13 +48,17 @@ public class ProductController {
 
         boolean onlyFeatured = "true".equals(featured);
         String query = (q == null) ? null : q.trim().toLowerCase();
+        String brandQ = (brand == null) ? null : brand.trim().toLowerCase();
         final Long catId = categoryId;
 
         products = products.stream()
                 .filter(p -> !onlyFeatured || Boolean.TRUE.equals(p.getFeatured()))
                 .filter(p -> catId == null || catId.equals(p.getCategoryId()))
                 .filter(p -> query == null || query.isEmpty()
-                        || (p.getTitle() != null && p.getTitle().toLowerCase().contains(query)))
+                        || (p.getTitle() != null && p.getTitle().toLowerCase().contains(query))
+                        || (p.getBrand() != null && p.getBrand().toLowerCase().contains(query)))
+                .filter(p -> brandQ == null || brandQ.isEmpty()
+                        || (p.getBrand() != null && p.getBrand().toLowerCase().equals(brandQ)))
                 .filter(p -> maxPrice == null || (p.getPrice() != null && p.getPrice() <= maxPrice))
                 .collect(Collectors.toList());
 
